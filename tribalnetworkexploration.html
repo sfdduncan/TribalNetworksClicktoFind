@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Identifying Tribally Owned Broadband Networks</title>
+<meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.7.0/mapbox-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.min.js" type="text/javascript"></script>
+<link href="https://cdn.jsdelivr.net/gh/jscastro76/threebox@v.2.2.2/dist/threebox.css" rel="stylesheet">
+<style>
+body { margin: 0; padding: 0; height:100%}
+</style>
+</head>
+<body>
+<style>
+    .mapboxgl-popup {
+        max-width: 400px;
+        font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    }
+    #popup{
+        width:50%;
+        position: absolute; top: 0; bottom: 0;        
+        left:50%;
+        z-index:1;
+        border:1px solid black;
+    }
+    #map{
+        z-index:-1;
+        position: absolute; top: 0; bottom: 0;        
+width:50%;
+    }
+</style>
+<div id="map"></div>
+<div id="popup"></div>
+<script>
+
+	mapboxgl.accessToken = 'pk.eyJ1Ijoic2ZkdW5jYW4iLCJhIjoiY2x2Z3QybHh2MHlwcTJpczJyejAyYWVpNyJ9.DLToR14vGnafkx-pCGj6KA';//put your access token within quotes
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/sfduncan/cm357z0bt016l01pdgy5u2jha',//set the dot map URL here
+        center: [-119.158, 37.476],//set map center coorinates inside square brackets as an array, in [lng,lat] format
+        zoom: 5.38, //set zoom to California
+        attributionControl: false // Disable default attribution
+
+    });
+
+    const zoomMap = new mapboxgl.Map({
+        container: 'popup',
+        style: 'mapbox://styles/sfduncan/cm36dao4101a101pa2bawchy1',//set your satelite map style URL here
+        center: [-123.428, 39.261],//set map center coorinates inside square brackets as an array, in [lng,lat] format
+        //for this map center, pick a place maybe with a compelling satelite image of a prison to start.
+        zoom: 8.45,//set zoom so that it is showing a closeup
+        bearing: 60,
+        pitch: 66,
+        logoPosition: null, 
+        attributionControl: false // Disable default attribution
+
+    });
+
+    
+/// set coordinates for the 3D model
+    const activeLocations = [
+        [-123.2089171, 39.2541828],
+        [-114.6145112, 34.9382716],
+        [-123.6734422, 41.0933714],
+        [-123.3584261, 41.8040513],
+        [-118.0560422, 36.5968832],
+        [-117.0817035, 33.45168381],
+        [-123.1893345, 39.86538135],
+        [-116.9535091, 33.25989289],
+        [-118.7302038, 36.0453445],
+        [-123.9049833, 41.3808929]
+    ];
+
+    const tb = (window.tb = new Threebox(
+        zoomMap,
+        zoomMap.getCanvas().getContext('webgl'),
+        {
+            defaultLights: true
+        }
+    ));
+
+
+    zoomMap.on('style.load', () => {
+        zoomMap.addLayer({
+            id: 'custom-threebox-model',
+            type: 'custom',
+            renderingMode: '3d',
+            onAdd: function () {
+                // Creative Commons License attribution:  Metlife Building model by https://sketchfab.com/NanoRay
+                // https://sketchfab.com/3d-models/metlife-building-32d3a4a1810a4d64abb9547bb661f7f3
+                const scale = 1;
+                const options = {
+                    obj: 'https://storage.googleapis.com/mapboxstuff/SatelliteModel/SatelliteTowerNew.glb',
+                    type: 'gltf',
+                    scale: { x: scale, y: scale, z: 2},
+                    units: 'meters',
+                    rotation: { x: 90, y: -90, z: 0 }
+                };
+            activeLocations.forEach((location) => {
+                tb.loadObj(options, (model) => {
+                    model.setCoords(location);
+                    model.setRotation({ x: 0, y: 0, z: 241 });
+                    tb.add(model);
+                });
+            });
+            },
+
+            render: function () {
+                tb.update();
+            }
+        });
+    });
+
+        // The code below detects a click on the prison_population layer of your map style.
+        // You need to check that in your map style the layer the name matches what is in the code
+        map.on('click', 'mergedoffices', (e) => {//change 'prison_boundaries' to your layer name
+            
+            // this is the feature that was clicked on below
+            const clickedOnFeature = e.features[0]
+            
+            //using keys to access feature object
+            //for example: the lat and long of the feature is here below
+            const coordinates = clickedOnFeature.geometry.coordinates.slice();
+
+            //console.log out properties to see what is available as popup text.
+            //uncomment below to see all the properties printed out on the console
+            console.log(e.features[0].properties)
+            //to access the different values inside properties, use the corresponding keys
+            //for example:
+
+            var tribalName = e.features[0].properties["Tribal Nat"];
+            var networkStatus = e.features[0].properties.Status;
+            //adding additional style elements 
+
+
+
+            popupText = `
+            <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+                        background-color: #f9f9f9; 
+                        padding: 10px; 
+                        border-radius: 10px;"> 
+                <strong>Tribal Government:</strong> ${tribalName} <br>
+                <strong>Network Status:</strong> ${networkStatus}
+            </div>
+        `;
+
+
+            //set the center of the satMap using .setCenter(coordinates to center on)            
+            zoomMap.setCenter(coordinates)
+            zoomMap.setZoom(15.7)//pick a zoom for best view of all prison footprintss
+            zoomMap.setBearing(15)
+            zoomMap.setPitch(88)
+
+            
+            //dont' worry about these 3 lines of comments and 3 lines of code below for now
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+            while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+            }
+
+            //populate the popup
+            //try your map out on the local server
+            //when you click you should see a pop up with some of the things I have already added to the variable popupText
+            //replace this text with more information about the prison
+            new mapboxgl.Popup()
+                .setLngLat(coordinates)
+                .setHTML(popupText)//here is where the variable with the strings I added goes
+                //you can set the html to a new variable of your own making
+
+                //or you can change the popupText variable by + more words and values
+                .addTo(map);
+        });
+
+
+        //the lines below are built in to style the pointer, 
+        // change the layer name prison_boundaries to match the layer name in your style
+        // Change the cursor to a pointer when the mouse is over the places layer.
+        map.on('mouseenter', 'mergedoffices', () => {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+
+        // Change it back to a pointer when it leaves.
+        map.on('mouseleave', 'mergedoffices', () => {
+            map.getCanvas().style.cursor = '';
+        });
+
+        Promise.all([
+        new Promise((resolve) => map.on('load', resolve)),
+        new Promise((resolve) => zoomMap.on('load', resolve))
+    ]).then(() => {
+        console.log('Both maps have fully loaded.');
+        
+        // Add additional logic here after both maps are fully loaded
+        alert('Maps are ready!');
+    });
+</script>
+
+</body>
+</html>
