@@ -14,6 +14,9 @@ body { margin: 0; padding: 0; height:100%}
 </head>
 <body>
 <style>
+    .mapboxgl-ctrl-logo {
+        display: none; /* Hides the logo */
+    }
     .mapboxgl-popup {
         max-width: 400px;
         font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
@@ -53,7 +56,6 @@ width:50%;
         zoom: 8.45,//set zoom so that it is showing a closeup
         bearing: 60,
         pitch: 66,
-        logoPosition: null, 
         attributionControl: false // Disable default attribution
 
     });
@@ -188,15 +190,6 @@ width:50%;
             map.getCanvas().style.cursor = '';
         });
 
-        Promise.all([
-        new Promise((resolve) => map.on('load', resolve)),
-        new Promise((resolve) => zoomMap.on('load', resolve))
-    ]).then(() => {
-        console.log('Both maps have fully loaded.');
-        
-        // Add additional logic here after both maps are fully loaded
-        alert('Maps are ready!');
-    });
 </script>
 
 </body>
