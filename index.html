@@ -14,12 +14,10 @@ body { margin: 0; padding: 0; height:100%}
 </head>
 <body>
 <style>
-    .mapboxgl-ctrl-logo {
-        display: none; /* Hides the logo */
-    }
     .mapboxgl-popup {
         max-width: 400px;
         font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        border-radius: 50px;
     }
     #popup{
         width:50%;
@@ -31,20 +29,162 @@ body { margin: 0; padding: 0; height:100%}
     #map{
         z-index:-1;
         position: absolute; top: 0; bottom: 0;        
-width:50%;
+        width:50%;
+    }
+    #info-box {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    z-index: 10;
+    width: 800px; /* Adjust width as needed */
+    max-width: 800px; /* Limit maximum width */
+    height: 150px; 
+}
+#info-box h1 {
+    margin: 0;
+    font-size: 36px;
+    font-weight: bold;
+    color: #333;
+}
+
+#info-box p {
+    margin: 15px 0 0;
+    font-size: 22px;
+    color: #555;
+}
+
+    #legend-box { 
+        position: absolute;
+        bottom: 30px;
+        right: 30px;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 40px 15px;
+        border-radius: 8px;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        z-index: 10;
+        width: 400px; /* Adjust width as needed */
+        height: 288px; 
+        opacity: .8;
+    }
+
+
+.legend-item {
+    display: absolute;
+    align-items: center; /* Align shape and text vertically */
+    gap: 10px; /* Space between shape and text */
+    margin-bottom: 34px;
+    margin-top: 23px;
+}
+
+.legend-item span {
+    font-size: 22px;
+    font-weight: bold;
+    color: #000000; /* Text color */
+    white-space: nowrap;
+    margin-left: 85px; 
+    margin-top: 15px;
+}
+    #click-circle { 
+        position: absolute; 
+        bottom: 277px; 
+        right: 360px; 
+        height: 25px; 
+        width: 25px; 
+        background-color: #5823c440; 
+        border: 3px solid #5823c480; 
+        border-radius: 50%; 
+        z-index: 11; 
+    }
+
+    #gray-circle { 
+    position: absolute; 
+    bottom: 217px; 
+    right: 360px; 
+    height: 25px; 
+    width: 25px; 
+    background-color: #80808066; /* Gray with 80% transparency */
+    border: 3px solid #808080CC; /* Gray with 80% transparency for the border */
+    border-radius: 50%; 
+    z-index: 12; 
+    }
+
+    #rectangle { 
+    position: absolute; 
+    bottom: 52px; 
+    right: 362.5px; 
+    height: 5px; 
+    width: 25px; 
+    background-color: #00721e; 
+    opacity: .7; 
+    z-index: 12; 
+    }
+
+    #gray-rectangle { 
+    position: absolute; 
+    bottom: 111px; 
+    right: 362.5px; 
+    height: 5px; 
+    width: 25px; 
+    background-color: gray; 
+    opacity: .7; 
+    z-index: 12; 
+    }
+
+
+    #tribal-rectangle { 
+    position: absolute; 
+    bottom: 163px; 
+    right: 360px; 
+    height: 19px; 
+    width: 30px; 
+    background-color: #c23700cc;
+    opacity: .7; 
+    z-index: 12; 
     }
 </style>
+<div id="legend-box">
+    <div class="legend-item">
+        <div id="click-circle"></div>
+        <span>Tribal Broadband Networks</span>
+    </div>
+    <div class="legend-item">
+        <div id="gray-circle"></div>
+        <span>Tribal Offices</span>
+    </div>
+    <div class="legend-item">
+        <div id="rectangle"></div>
+        <span>Recognized Tribal Lands</span>
+    </div>
+    <div class="legend-item">
+        <div id="gray-rectangle"></div>
+        <span>Potential Mesh Network</span>
+    </div>
+    <div class="legend-item">
+        <div id="tribal-rectangle"></div>
+        <span>Middle Mile Network</span>
+    </div>
+</div>
+
 <div id="map"></div>
 <div id="popup"></div>
+<div id="info-box">
+    <h1>Identifying Tribally Owned Broadband Networks</h1>
+    <p>This map visualizes tribally owned broadband networks across California, highlighting key areas and their network status. Click on a point for more details.</p>
+</div>
 <script>
 
 	mapboxgl.accessToken = 'pk.eyJ1Ijoic2ZkdW5jYW4iLCJhIjoiY2x2Z3QybHh2MHlwcTJpczJyejAyYWVpNyJ9.DLToR14vGnafkx-pCGj6KA';//put your access token within quotes
     const map = new mapboxgl.Map({
         container: 'map',
         style: 'mapbox://styles/sfduncan/cm357z0bt016l01pdgy5u2jha',//set the dot map URL here
-        center: [-119.158, 37.476],//set map center coorinates inside square brackets as an array, in [lng,lat] format
+        center: [-119.158, 38.5],//set map center coorinates inside square brackets as an array, in [lng,lat] format
         zoom: 5.38, //set zoom to California
-        attributionControl: false // Disable default attribution
 
     });
 
@@ -56,8 +196,6 @@ width:50%;
         zoom: 8.45,//set zoom so that it is showing a closeup
         bearing: 60,
         pitch: 66,
-        attributionControl: false // Disable default attribution
-
     });
 
     
@@ -96,18 +234,19 @@ width:50%;
                 const options = {
                     obj: 'https://storage.googleapis.com/mapboxstuff/SatelliteModel/SatelliteTowerNew.glb',
                     type: 'gltf',
-                    scale: { x: scale, y: scale, z: 2},
+                    scale: {x: scale, y: scale, z: 2},
                     units: 'meters',
                     rotation: { x: 90, y: -90, z: 0 }
                 };
             activeLocations.forEach((location) => {
+                console.log('Loading model at:', location); // Debugging output
                 tb.loadObj(options, (model) => {
                     model.setCoords(location);
                     model.setRotation({ x: 0, y: 0, z: 241 });
                     tb.add(model);
                 });
             });
-            },
+        },
 
             render: function () {
                 tb.update();
@@ -120,8 +259,16 @@ width:50%;
         map.on('click', 'mergedoffices', (e) => {//change 'prison_boundaries' to your layer name
             
             // this is the feature that was clicked on below
-            const clickedOnFeature = e.features[0]
+            const clickedOnFeature = e.features[0];
             
+            const tribalName = clickedOnFeature.properties["Tribal Nat"];
+            const networkStatus = clickedOnFeature.properties.Status;
+
+                // Check if the feature's Status is "Active"
+            if (networkStatus !== "Active") {
+        // Do nothing if the status is not "Active"
+                return;
+            }
             //using keys to access feature object
             //for example: the lat and long of the feature is here below
             const coordinates = clickedOnFeature.geometry.coordinates.slice();
@@ -132,8 +279,6 @@ width:50%;
             //to access the different values inside properties, use the corresponding keys
             //for example:
 
-            var tribalName = e.features[0].properties["Tribal Nat"];
-            var networkStatus = e.features[0].properties.Status;
             //adding additional style elements 
 
 
@@ -191,6 +336,9 @@ width:50%;
         });
 
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
